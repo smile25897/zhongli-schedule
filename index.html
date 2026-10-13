@@ -129,7 +129,7 @@ function render(){
   const inner = $("inner"); inner.innerHTML = "";
   inner.style.width = (LABW+TOTALW)+"px";
   // 表頭三列：月份 / 日期 / 星期
-  const hdr = (h,top,cls,fill)=>{ const r=document.createElement("div"); r.className="hrow"; r.style.top=top+"px"; r.style.height=h+"px"; r.innerHTML=`<div class="lab" style="height:${h}px;border-bottom:0;font-size:.7rem;color:var(--dim)">${cls}</div><div class="track" style="width:${TOTALW}px;height:${h}px;border-bottom:0">${fill}</div>`; inner.appendChild(r); };
+  const hdr = (h,top,cls,fill,bg)=>{ const r=document.createElement("div"); r.className="hrow"; r.style.top=top+"px"; r.style.height=h+"px"; r.innerHTML=`<div class="lab" style="height:${h}px;border-bottom:0;font-size:.7rem;color:var(--dim)">${cls}</div><div class="track" style="width:${TOTALW}px;height:${h}px;border-bottom:0">${fill}</div>`; if (bg) r.querySelector(".track").style.backgroundImage = bg; inner.appendChild(r); };
   let mh="", dh="", wh="";
   for (let m=0;m<12;m++) mh += `<div class="mon" style="left:${monthStarts[m]*COL}px;width:${monthDays(m)*COL}px;background:${m%2?"var(--soft)":"transparent"}">${m+1} 月</div>`;
   for (let i=0;i<NDAYS;i++){ const dt=new Date(Date.UTC(YEAR,0,1+i)); const dw=dt.getUTCDay(), we=dw===0||dw===6;
@@ -139,7 +139,7 @@ function render(){
   let nh = "";
   HOLS.forEach(h=>{ const w=(h.i1-h.i0+1)*COL, vert = (h.i1===h.i0);
     nh += `<div class="hnote ${vert?"v":""} ${h.strong?"":"light"}" data-h="${HOLS.indexOf(h)}" style="left:${h.i0*COL+1}px;width:${w-2}px"><span>${esc(h.name)}</span></div>`; });
-  hdr(22,0,"月份",mh); hdr(18,22,"日期",dh); hdr(16,40,"星期",wh); hdr(30,56,"備註",nh);
+  hdr(22,0,"月份",mh); hdr(18,22,"日期",dh); hdr(16,40,"星期",wh); hdr(30,56,"備註",nh,BG);
   const groups = buildGroups();
   let bodyTop = 56, n = 0;
   groups.forEach(g=>{
