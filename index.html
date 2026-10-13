@@ -9,7 +9,7 @@
     --paper:#eff3f0; --card:#fff; --ink:#16211d; --dim:#5c6b64; --faint:#93a29b; --line:#dbe3de; --soft:#e7ece9;
     --shadow:0 1px 2px rgba(22,33,29,.05),0 4px 20px rgba(22,33,29,.05);
     --g-night:#fbe3cf; --g-day:#d6e6f0; --g-noon:#d9ecd9; --g-hol:#f4d9e4;
-    --today:#b8464a;
+    --today:#b8464a; --grid:rgba(140,150,145,.22);
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
     --paper:#121614; --card:#1a201d; --ink:#e7ece9; --dim:#9aa8a1; --faint:#5f6d67; --line:#2a332e; --soft:#212a26;
@@ -41,8 +41,8 @@
   .hrow { position:sticky; z-index:7; background:var(--card); display:flex; }
   .hrow .lab { z-index:8; }
   .mon { position:absolute; top:0; height:22px; line-height:22px; text-align:center; font-size:.78rem; font-weight:700; border-right:1px solid var(--line); }
-  .dn { position:absolute; top:0; height:18px; line-height:18px; text-align:center; font-size:.62rem; color:var(--dim); }
-  .dw { position:absolute; top:0; height:16px; line-height:16px; text-align:center; font-size:.6rem; color:var(--faint); }
+  .dn { position:absolute; top:0; height:18px; line-height:18px; text-align:center; font-size:.62rem; color:var(--dim); border-left:1px solid var(--grid); }
+  .dw { position:absolute; top:0; height:16px; line-height:16px; text-align:center; font-size:.6rem; color:var(--faint); border-left:1px solid var(--grid); }
   .we { color:#b8464a; }
   .band { position:absolute; border-radius:5px; }
   .cell { position:absolute; border-radius:4px; color:#fff; font-size:.62rem; font-weight:700; text-align:center; display:flex; flex-direction:column; justify-content:center; line-height:1.15; cursor:default; overflow:hidden; }
@@ -100,6 +100,7 @@ const monthDays = m => new Date(YEAR,m+1,0).getDate();
 const BG = (()=>{
   let r = "";
   for (let i=0;i<NDAYS;i++){ const dw=new Date(Date.UTC(YEAR,0,1+i)).getUTCDay(); if(dw===0||dw===6) r += `<rect x='${i*COL}' y='0' width='${COL}' height='100%' fill='rgba(120,140,130,.14)'/>`; }
+  for (let i=1;i<NDAYS;i++) r += `<rect x='${i*COL}' y='0' width='1' height='100%' fill='rgba(140,150,145,.22)'/>`;   // 每日淺灰格線
   monthStarts.forEach(x=>{ r += `<rect x='${x*COL}' y='0' width='1' height='100%' fill='rgba(120,140,130,.45)'/>`; });
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${TOTALW}' height='100%' preserveAspectRatio='none'>${r}</svg>`)}")`;
 })();
