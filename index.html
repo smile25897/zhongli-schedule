@@ -9,13 +9,13 @@
     --paper:#eff3f0; --card:#fff; --ink:#16211d; --dim:#5c6b64; --faint:#93a29b; --line:#dbe3de; --soft:#e7ece9;
     --shadow:0 1px 2px rgba(22,33,29,.05),0 4px 20px rgba(22,33,29,.05);
     --g-night:#fbe3cf; --g-day:#d6e6f0; --g-noon:#d9ecd9; --g-hol:#f4d9e4;
-    --today:#b8464a; --grid:rgba(140,150,145,.22);
+    --today:#b8464a; --grid:rgba(140,150,145,.22); --room:#e4def0;
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
     --paper:#121614; --card:#1a201d; --ink:#e7ece9; --dim:#9aa8a1; --faint:#5f6d67; --line:#2a332e; --soft:#212a26;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
     --g-night:#3a2c20; --g-day:#1f2f3a; --g-noon:#233326; --g-hol:#3a2530;
-    --today:#e0797d; } }
+    --today:#e0797d; --room:#2c2838; } }
   * { box-sizing:border-box; }
   body { margin:0; padding:24px 16px 60px; background:var(--paper); color:var(--ink);
     font-family:"Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif; line-height:1.45; }
@@ -39,8 +39,19 @@
   .hdr .lab, .hdr .track { position:sticky; z-index:6; background:var(--card); }
   .hdr .track { border-bottom:0; }
   .hrow { position:sticky; z-index:7; background:var(--card); display:flex; }
-  .hrow .lab { z-index:8; }
-  .mon { position:absolute; top:0; height:22px; line-height:22px; text-align:center; font-size:.78rem; font-weight:700; border-right:1px solid var(--line); }
+  .hrow .lab { z-index:8; background:var(--card); }
+  .mon { position:absolute; top:0; height:22px; line-height:22px; text-align:center; font-size:.78rem; font-weight:700; color:#16211d; border-right:1px solid rgba(0,0,0,.12); }
+  /* 左側合併標籤：時段 → 教室 → 課程列 */
+  .sblock { display:flex; border-top:3px solid var(--ink); }
+  .slab { position:sticky; left:0; z-index:5; flex:0 0 58px; display:flex; align-items:center; justify-content:center;
+    font-size:.82rem; font-weight:700; border-right:1px solid var(--line); }
+  .rcol { display:flex; flex-direction:column; }
+  .rblock { display:flex; }
+  .rblock + .rblock { border-top:1px solid var(--faint); }
+  .rlab { position:sticky; left:58px; z-index:5; flex:0 0 74px; display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:0 4px; font-size:.78rem; font-weight:700; background:var(--room); border-right:2px solid var(--line); }
+  .lcol { display:flex; flex-direction:column; }
+  .row.sub .track { border-top:1px dashed var(--line); }
   .dn { position:absolute; top:0; height:18px; line-height:18px; text-align:center; font-size:.62rem; color:var(--dim); border-left:1px solid var(--grid); }
   .dw { position:absolute; top:0; height:16px; line-height:16px; text-align:center; font-size:.6rem; color:var(--faint); border-left:1px solid var(--grid); }
   .we { color:#b8464a; }
@@ -88,6 +99,7 @@ const dayIdx = s => Math.round((Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(
 const NDAYS = (YEAR%4===0&&(YEAR%100!==0||YEAR%400===0)) ? 366 : 365;
 const TOTALW = NDAYS*COL;
 const GROUP_ORDER = ["夜間","日間","午間","假日"];
+const MONTH_BG = ["#b6d7a8","#ead1dc","#c9daf8","#cfe2f3","#f4cccc","#fce5cd","#d9ead3","#d0e0e3","#c9daf8","#cfe2f3","#d9d2e9","#ead1dc"];
 const GROUP_BG = {"夜間":"var(--g-night)","日間":"var(--g-day)","午間":"var(--g-noon)","假日":"var(--g-hol)"};
 const tip = $("tip");
 function showTip(e,h){ tip.innerHTML=h; tip.style.opacity=1; const w=tip.offsetWidth; let x=e.clientX+14; if(x+w>innerWidth-8) x=e.clientX-w-14; tip.style.left=x+"px"; tip.style.top=(e.clientY+14)+"px"; }
@@ -131,7 +143,7 @@ function render(){
   // 表頭三列：月份 / 日期 / 星期
   const hdr = (h,top,cls,fill,bg)=>{ const r=document.createElement("div"); r.className="hrow"; r.style.top=top+"px"; r.style.height=h+"px"; r.innerHTML=`<div class="lab" style="height:${h}px;border-bottom:0;font-size:.7rem;color:var(--dim)">${cls}</div><div class="track" style="width:${TOTALW}px;height:${h}px;border-bottom:0">${fill}</div>`; if (bg) r.querySelector(".track").style.backgroundImage = bg; inner.appendChild(r); };
   let mh="", dh="", wh="";
-  for (let m=0;m<12;m++) mh += `<div class="mon" style="left:${monthStarts[m]*COL}px;width:${monthDays(m)*COL}px;background:${m%2?"var(--soft)":"transparent"}">${m+1} 月</div>`;
+  for (let m=0;m<12;m++) mh += `<div class="mon" style="left:${monthStarts[m]*COL}px;width:${monthDays(m)*COL}px;background:${MONTH_BG[m]}">${m+1} 月</div>`;
   for (let i=0;i<NDAYS;i++){ const dt=new Date(Date.UTC(YEAR,0,1+i)); const dw=dt.getUTCDay(), we=dw===0||dw===6;
     const hs = holAt(i), hh = hs ? (hs.strong ? "holn" : "holl") : "";
     dh += `<div class="dn ${we?"we":""} ${hh}" style="left:${i*COL}px;width:${COL}px">${dt.getUTCDate()}</div>`;
@@ -142,7 +154,18 @@ function render(){
   hdr(22,0,"月份",mh); hdr(18,22,"日期",dh); hdr(16,40,"星期",wh); hdr(30,56,"備註",nh,BG);
   const groups = buildGroups();
   let bodyTop = 56, n = 0;
+  // 左側標籤：時段（合併）→ 教室（合併）→ 該教室的各條課程列
+  const div = (cls, html="") => { const d=document.createElement("div"); d.className=cls; d.innerHTML=html; return d; };
+  let curSlot = null, rcol = null;
   groups.forEach(g=>{
+    if (g.slot !== curSlot){
+      curSlot = g.slot;
+      const sb = div("sblock"), sl = div("slab", `<span>${esc(g.slot)}</span>`);
+      sl.style.background = GROUP_BG[g.slot]||"var(--soft)";
+      rcol = div("rcol"); sb.append(sl, rcol); inner.appendChild(sb);
+    }
+    const rb = div("rblock"), lcol = div("lcol");
+    rb.append(div("rlab", `<span>${esc(g.room)}</span>`), lcol); rcol.appendChild(rb);
     const courses = Object.values(g.courses).map(c=>{
       const ds = Object.keys(c.days).sort(); c.first = dayIdx(ds[0]); c.last = dayIdx(ds[ds.length-1]); c.dates = ds;
       c.teacherTxt = [...new Set([...c.teachers].flatMap(t=>t.replace(/\s*\([^)]*\)/g,"").split("、")).map(x=>x.trim()).filter(Boolean))].join("、");
@@ -159,8 +182,6 @@ function render(){
     });
     lanes.forEach((lane,li)=>{
       const row = document.createElement("div"); row.className = "row";
-      const lab = document.createElement("div"); lab.className="lab"; lab.style.height = LANE_H+"px"; lab.style.background = GROUP_BG[g.slot]||"var(--soft)";
-      lab.innerHTML = li===0 ? `<div>${esc(g.slot)}・${esc(g.room)}</div>` : `<span style="color:var(--faint);font-weight:400">└</span>`;
       const tr = document.createElement("div"); tr.className="track"; tr.style.width = TOTALW+"px"; tr.style.height = LANE_H+"px"; tr.style.backgroundImage = BG;
       HOLS.forEach(h=>{   // 國定假日紅色警示條（畫在課程色帶下方，假日仍有排課時看得出衝突）
         const d = document.createElement("div"); d.className = "hol" + (h.strong ? "" : " light");
@@ -184,7 +205,8 @@ function render(){
           tr.appendChild(cell);
         });
       });
-      row.appendChild(lab); row.appendChild(tr); inner.appendChild(row);
+      if (li>0) row.classList.add("sub");
+      row.appendChild(tr); lcol.appendChild(row);
     });
   });
   if (!groups.length){ const e=document.createElement("div"); e.className="empty"; e.textContent="沒有符合條件的課程"; inner.appendChild(e); }
