@@ -76,6 +76,9 @@
   #inner.flash .tcol { animation:tflash .45s ease-in-out 3; }
   @keyframes tflash { 50% { background:var(--today-flash); } }
   .dn.td, .dw.td { background:var(--today) !important; color:var(--today-ink) !important; font-weight:700; }
+  .tnote { position:absolute; top:0; bottom:0; background:var(--today); pointer-events:none; }
+  #inner.flash .tnote { animation:tflash2 .45s ease-in-out 3; }
+  @keyframes tflash2 { 50% { opacity:.45; } }
   .tbox { position:absolute; top:-18px; height:34px; border:2px solid var(--today); border-radius:4px; pointer-events:none; display:none; z-index:2; }
   .tbox.show { display:block; }
   .tbox.pulse { animation:tpulse .45s ease-in-out 3; }
@@ -183,7 +186,8 @@ function render(){
     const td = i===todayIdx ? "td" : "";
     dh += `<div class="dn ${we?"we":""} ${hh} ${td}" style="left:${i*COL}px;width:${COL}px">${dt.getUTCDate()}</div>`;
     wh += `<div class="dw ${we?"we":""} ${hh} ${td}" style="left:${i*COL}px;width:${COL}px">${DOW[dw]}</div>`; }
-  let nh = "";
+  // 備註列的今天：與日期／星期同色，連成一整塊（放最前面，假日名稱仍蓋在上面）
+  let nh = todayIdx>=0 ? `<div class="tnote" style="left:${todayIdx*COL}px;width:${COL}px"></div>` : "";
   HOLS.forEach(h=>{ const w=(h.i1-h.i0+1)*COL, vert = (h.i1===h.i0);
     nh += `<div class="hnote ${vert?"v":""} ${h.strong?"":"light"}" data-h="${HOLS.indexOf(h)}" style="left:${h.i0*COL+1}px;width:${w-2}px"><span>${esc(h.name)}</span></div>`; });
   // 「今天」框：蓋住日期＋星期兩列（放在星期列，往上延伸到日期列）
