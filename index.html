@@ -239,7 +239,7 @@ function render(){
         tr.appendChild(band);
         const nm = document.createElement("div"); nm.className="cname"; nm.style.cssText = `left:${c.first*COL+2}px;top:1px;width:${c.occ}px;color:${c.color}`;
         nm.innerHTML = `<b>${esc(c.short)}</b><small>${esc(c.teacherTxt)}</small>`;
-        nm.dataset.first = c.first*COL+2; nm.dataset.max = (c.last+1)*COL - 70;
+        nm.dataset.first = c.first*COL+2; nm.dataset.end = (c.last+1)*COL;   // 課名尾端不可超過最後一堂
         nm.onmousemove = e=>showTip(e, courseTip(c)); nm.onmouseleave = hideTip; tr.appendChild(nm);
         c.dates.forEach(ds=>{
           const items = c.days[ds], i = dayIdx(ds);
@@ -262,7 +262,11 @@ function render(){
 // 捲動時讓課名貼齊畫面左緣，不會因為起點在畫面外而被切掉
 function place(){
   const left = $("sc").scrollLeft + 2;
-  document.querySelectorAll(".cname").forEach(n=>{ const f=+n.dataset.first, mx=+n.dataset.max; n.style.left = Math.max(f, Math.min(left, Math.max(f,mx))) + "px"; });
+  document.querySelectorAll(".cname").forEach(n=>{
+    if (!n.dataset.tw){ const s=n.querySelector("small"); n.dataset.tw = n.querySelector("b").offsetWidth + (s ? s.offsetWidth+6 : 0); }
+    const f = +n.dataset.first, mx = +n.dataset.end - +n.dataset.tw - 2;   // 最遠只能移到「文字尾端＝最後一堂」
+    n.style.left = Math.max(f, Math.min(left, mx)) + "px";
+  });
 }
 let raf = 0;
 $("sc").addEventListener("scroll", ()=>{ if (!raf) raf = requestAnimationFrame(()=>{ raf = 0; place(); }); });
