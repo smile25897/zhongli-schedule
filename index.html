@@ -118,7 +118,7 @@ function buildGroups(){
     if (q && !(d.name+d.teacher).toLowerCase().includes(q)) return;
     const gk = d.slot+"|"+d.room;
     const g = (groups[gk] ||= {slot:d.slot, room:d.room, courses:{}});
-    const c = (g.courses[d.tid] ||= {tid:d.tid, name:d.name, short:d.short, loc:d.loc, teachers:new Set(), days:{}});
+    const c = (g.courses[d.tid] ||= {tid:d.tid, name:d.name, short:d.short, loc:d.loc, slot:d.slot, room:d.room, teachers:new Set(), days:{}});
     c.teachers.add(d.teacher);
     const day = (c.days[d.date] ||= []); day.push(d);
   });
@@ -199,14 +199,17 @@ function place(){
 }
 let raf = 0;
 $("sc").addEventListener("scroll", ()=>{ if (!raf) raf = requestAnimationFrame(()=>{ raf = 0; place(); }); });
-function courseTip(c){
+// 課程詳細資料：課名／時段・教室／期間（共幾堂課）／老師；滑在上課日時再列出當天每一堂
+const tname = t => t.replace(/\s*[（(][^)）]*[)）]/g,"").split("/")[0].trim();
+function courseTip(c, ds, items){
   const total = Object.values(c.days).reduce((a,x)=>a+x.length,0);
-  return `<b>${esc(c.name)}</b><br>老師：${esc(c.teacherTxt)}<br>期間：${c.dates[0]} ～ ${c.dates[c.dates.length-1]}<br>今年共 ${total} 堂`;
+  const teachers = [...new Set([...c.teachers].flatMap(t=>t.split("、")).map(tname).filter(Boolean))].join("、");
+  let h = `<b>${esc(c.name)}</b><br>${esc(c.slot)}・${esc(c.room)}<br>期間：${c.dates[0]} ～ ${c.dates[c.dates.length-1]}（共 ${total} 堂課）<br>老師：${esc(teachers)}`;
+  if (items) h += `<hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:5px 0">${ds}（${DOW[new Date(ds+"T00:00").getDay()]}）` +
+    items.map(x=>`<br>${x.half?x.half+"午　":""}第 ${esc(x.prog||"?")} 堂　${esc(x.teacher)}`).join("");
+  return h;
 }
-function cellTip(c, ds, items){
-  const dw = DOW[new Date(ds+"T00:00").getDay()];
-  return `<b>${esc(c.short)}</b><br>${ds}（${dw}）` + items.map(x=>`<br>${x.slot}${x.half?"・"+x.half+"午":""}　第 ${esc(x.prog||"?")} 堂　${esc(x.room)}${x.loc?"（"+esc(x.loc)+"）":""}<br>老師：${esc(x.teacher)}`).join("");
-}
+const cellTip = courseTip;
 $("months").innerHTML = Array.from({length:12},(_,m)=>`<button data-m="${m}">${m+1}月</button>`).join("");
 document.querySelectorAll("#months button").forEach(b=>b.onclick=()=>{ $("sc").scrollLeft = monthStarts[+b.dataset.m]*COL - 4; });
 $("goToday").onclick=()=>{ if (todayIdx>=0) $("sc").scrollLeft = Math.max(0, todayIdx*COL - 200); };
