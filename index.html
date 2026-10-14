@@ -296,7 +296,7 @@ function courseTip(c, ds, items){
   const timeTxt = Object.keys(tm).sort().map(k=>k+[...tm[k]].join("、")).join("／") || "—";
   let h = `<b>${esc(c.name)}</b><br>${esc(c.slot)}・${esc(c.room)}<br>期間：${c.dates[0]} ～ ${c.dates[c.dates.length-1]}（共 ${total} 堂課）<br>時間：${esc(timeTxt)}<br>老師：${esc(teachers)}`;
   if (items) h += `<hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:5px 0">${ds}（${DOW[new Date(ds+"T00:00").getDay()]}）` +
-    items.map(x=>`<br>${x.half?x.half+"午　":""}第 ${esc(x.prog||"?")} 堂　${esc(x.teacher)}`).join("");
+    items.map(x=>`<br>${x.half?x.half+"午　":""}第 ${esc(x.prog||"?")} 堂　${x.time?esc(x.time)+"　":""}${esc(x.teacher)}`).join("");
   return h;
 }
 const cellTip = courseTip;
