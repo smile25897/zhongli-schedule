@@ -9,13 +9,15 @@
     --paper:#eff3f0; --card:#fff; --ink:#16211d; --dim:#5c6b64; --faint:#93a29b; --line:#dbe3de; --soft:#e7ece9;
     --shadow:0 1px 2px rgba(22,33,29,.05),0 4px 20px rgba(22,33,29,.05);
     --g-night:#fbe3cf; --g-day:#d6e6f0; --g-noon:#d9ecd9; --g-hol:#f4d9e4;
-    --today:#b8464a; --grid:rgba(140,150,145,.22); --room:#e4def0;
+    --today:#f2c200; --today-ink:#3d3000; --today-bg:rgba(255,221,64,.22); --today-flash:rgba(255,214,0,.55);
+    --grid:rgba(140,150,145,.22); --room:#e4def0;
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
     --paper:#121614; --card:#1a201d; --ink:#e7ece9; --dim:#9aa8a1; --faint:#5f6d67; --line:#2a332e; --soft:#212a26;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
     --g-night:#3a2c20; --g-day:#1f2f3a; --g-noon:#233326; --g-hol:#3a2530;
-    --today:#e0797d; --room:#2c2838; } }
+    --today:#e0b400; --today-ink:#1a1400; --today-bg:rgba(240,200,40,.14); --today-flash:rgba(240,200,40,.4);
+    --room:#2c2838; } }
   * { box-sizing:border-box; }
   body { margin:0; padding:24px 16px 60px; background:var(--paper); color:var(--ink);
     font-family:"Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif; line-height:1.45; }
@@ -66,15 +68,15 @@
   .hnote.v span { writing-mode:vertical-rl; text-orientation:upright; letter-spacing:0; line-height:1; }
   .dn.holn, .dw.holn { background:#d92b2b; color:#fff; font-weight:700; }
   .dn.holl, .dw.holl { background:rgba(217,43,43,.22); color:var(--ink); font-weight:700; }
-  .tcol { position:absolute; top:0; bottom:0; pointer-events:none; background:rgba(184,70,74,.13);
-    box-shadow:inset 1px 0 0 rgba(184,70,74,.5), inset -1px 0 0 rgba(184,70,74,.5); }
+  .tcol { position:absolute; top:0; bottom:0; pointer-events:none; background:var(--today-bg);
+    box-shadow:inset 1px 0 0 var(--today), inset -1px 0 0 var(--today); }
   #inner.flash .tcol { animation:tflash .45s ease-in-out 3; }
-  @keyframes tflash { 50% { background:rgba(184,70,74,.38); } }
-  .dn.td, .dw.td { background:var(--today) !important; color:#fff !important; font-weight:700; }
+  @keyframes tflash { 50% { background:var(--today-flash); } }
+  .dn.td, .dw.td { background:var(--today) !important; color:var(--today-ink) !important; font-weight:700; }
   .tbox { position:absolute; top:-18px; height:34px; border:2px solid var(--today); border-radius:4px; pointer-events:none; display:none; z-index:2; }
   .tbox.show { display:block; }
   .tbox.pulse { animation:tpulse .45s ease-in-out 3; }
-  @keyframes tpulse { 50% { box-shadow:0 0 0 4px rgba(184,70,74,.35); transform:scale(1.12); } }
+  @keyframes tpulse { 50% { box-shadow:0 0 0 4px var(--today-flash); transform:scale(1.12); } }
   #tip { position:fixed; pointer-events:none; background:var(--ink); color:var(--paper); font-size:.78rem; padding:8px 11px; border-radius:8px; opacity:0; transition:opacity .08s; z-index:20; max-width:320px; line-height:1.55; }
   .empty { padding:24px; text-align:center; color:var(--faint); }
 </style>
