@@ -67,6 +67,10 @@
   .dn.holn, .dw.holn { background:#d92b2b; color:#fff; font-weight:700; }
   .dn.holl, .dw.holl { background:rgba(217,43,43,.22); color:var(--ink); font-weight:700; }
   .today { position:absolute; top:0; bottom:0; width:2px; background:var(--today); z-index:4; pointer-events:none; opacity:.85; }
+  .tbox { position:absolute; top:-18px; height:34px; border:2px solid var(--today); border-radius:4px; pointer-events:none; display:none; z-index:2; }
+  .tbox.show { display:block; }
+  .tbox.pulse { animation:tpulse .45s ease-in-out 3; }
+  @keyframes tpulse { 50% { box-shadow:0 0 0 4px rgba(184,70,74,.35); transform:scale(1.12); } }
   #tip { position:fixed; pointer-events:none; background:var(--ink); color:var(--paper); font-size:.78rem; padding:8px 11px; border-radius:8px; opacity:0; transition:opacity .08s; z-index:20; max-width:320px; line-height:1.55; }
   .empty { padding:24px; text-align:center; color:var(--faint); }
 </style>
@@ -105,8 +109,8 @@ const NIGHT_CAT = (()=>{ const cnt = {};
     (cnt[d.tid] ||= [0,0])[[1,3,5].includes(dw) ? 0 : 1]++; });
   return Object.fromEntries(Object.entries(cnt).map(([t,[a,b]])=>[t, a>=b ? "一三五夜間" : "二四夜間"])); })();
 const catOf = d => d.slot==="夜間" ? NIGHT_CAT[d.tid] : d.slot==="假日" ? "假日" : "日間";
-// 教室：固定顯示這三間（依此順序），其他教室（如雲端教室）有課才顯示
-const ROOMS = [["教室一","教室1101"],["教室四","教室1104"],["教室三","教室1103(製圖教室)"]];
+// 教室：固定顯示這四間（依此順序），其他教室有課才顯示
+const ROOMS = [["教室一","教室1101"],["教室四","教室1104"],["教室三","教室1103(製圖教室)"],["雲端教室二","雲端教室二"]];
 const roomName = r => (ROOMS.find(x=>x[0]===r)||[r,r])[1];
 const roomRank = r => { const i = ROOMS.findIndex(x=>x[0]===r); return i<0 ? 99 : i; };
 const MONTH_BG = ["#b6d7a8","#ead1dc","#c9daf8","#cfe2f3","#f4cccc","#fce5cd","#d9ead3","#d0e0e3","#c9daf8","#cfe2f3","#d9d2e9","#ead1dc"];
@@ -145,7 +149,7 @@ function buildGroups(){
     c.teachers.add(d.teacher);
     const day = (c.days[d.date] ||= []); day.push(d);
   });
-  if (!q) GROUP_ORDER.filter(s=>!slotSel || s===slotSel).forEach(s=>   // 沒有搜尋時，三間實體教室一律列出
+  if (!q) GROUP_ORDER.filter(s=>!slotSel || s===slotSel).forEach(s=>   // 沒有搜尋時，固定教室一律列出
     ROOMS.forEach(([r])=>{ groups[s+"|"+r] ||= {slot:s, room:r, courses:{}}; }));
   return Object.values(groups).sort((a,b)=>GROUP_ORDER.indexOf(a.slot)-GROUP_ORDER.indexOf(b.slot)
     || roomRank(a.room)-roomRank(b.room) || a.room.localeCompare(b.room));
@@ -165,6 +169,8 @@ function render(){
   let nh = "";
   HOLS.forEach(h=>{ const w=(h.i1-h.i0+1)*COL, vert = (h.i1===h.i0);
     nh += `<div class="hnote ${vert?"v":""} ${h.strong?"":"light"}" data-h="${HOLS.indexOf(h)}" style="left:${h.i0*COL+1}px;width:${w-2}px"><span>${esc(h.name)}</span></div>`; });
+  // 「今天」框：蓋住日期＋星期兩列（放在星期列，往上延伸到日期列）
+  if (todayIdx>=0) wh += `<div id="todayBox" class="tbox${todayShown?" show":""}" style="left:${todayIdx*COL}px;width:${COL}px"></div>`;
   hdr(22,0,"月份",mh); hdr(18,22,"日期",dh); hdr(16,40,"星期",wh); hdr(30,56,"備註",nh,BG);
   const groups = buildGroups();
   let bodyTop = 56, n = 0;
@@ -252,7 +258,14 @@ function courseTip(c, ds, items){
 const cellTip = courseTip;
 $("months").innerHTML = Array.from({length:12},(_,m)=>`<button data-m="${m}">${m+1}月</button>`).join("");
 document.querySelectorAll("#months button").forEach(b=>b.onclick=()=>{ $("sc").scrollLeft = monthStarts[+b.dataset.m]*COL - 4; });
-$("goToday").onclick=()=>{ if (todayIdx>=0) $("sc").scrollLeft = Math.max(0, todayIdx*COL - 200); };
+let todayShown = false;
+$("goToday").onclick=()=>{
+  if (todayIdx<0) return;
+  $("sc").scrollLeft = Math.max(0, todayIdx*COL - 200);
+  todayShown = true;
+  const b = $("todayBox"); if (!b) return;
+  b.classList.add("show"); b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");   // 重新播放閃爍提示
+};
 $("slot").onchange=render; $("q").oninput=render;
 $("title").textContent = `中壢分校 ${YEAR} 年度課程行事曆`;
 const fdates = [...new Set(META.fetched.map(f=>f[1]))];
