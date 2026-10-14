@@ -45,6 +45,9 @@
   .mon { position:absolute; top:0; height:22px; line-height:22px; text-align:center; font-size:.78rem; font-weight:700; color:#16211d; border-right:1px solid rgba(0,0,0,.12); }
   /* 左側合併標籤：時段 → 教室 → 課程列 */
   .sblock { display:flex; border-top:3px solid var(--ink); }
+  /* 表頭下方粗黑線：放在固定的「備註」列底部，捲動時不會跑掉 */
+  #inner > .hrow:nth-child(4) { box-shadow:0 3px 0 var(--ink); }
+  #inner > .hrow + .sblock { border-top:3px solid transparent; }
   .slab { position:sticky; left:0; z-index:5; flex:0 0 58px; display:flex; align-items:center; justify-content:center;
     text-align:center; line-height:1.35; font-size:.82rem; font-weight:700; border-right:1px solid var(--line); }
   .rcol { display:flex; flex-direction:column; }
