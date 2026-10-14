@@ -44,7 +44,7 @@
   /* 左側合併標籤：時段 → 教室 → 課程列 */
   .sblock { display:flex; border-top:3px solid var(--ink); }
   .slab { position:sticky; left:0; z-index:5; flex:0 0 58px; display:flex; align-items:center; justify-content:center;
-    font-size:.82rem; font-weight:700; border-right:1px solid var(--line); }
+    text-align:center; line-height:1.35; font-size:.82rem; font-weight:700; border-right:1px solid var(--line); }
   .rcol { display:flex; flex-direction:column; }
   .rblock { display:flex; }
   .rblock + .rblock { border-top:1px solid var(--faint); }
@@ -78,7 +78,7 @@
     <div class="bar">
       <div class="months" id="months"></div>
       <button id="goToday">今天</button>
-      <select id="slot"><option value="">全部時段</option><option>夜間</option><option>日間</option><option>午間</option><option>假日</option></select>
+      <select id="slot"><option value="">全部分類</option><option>一三五夜間</option><option>二四夜間</option><option>日間</option><option>假日</option></select>
       <input type="search" id="q" placeholder="搜尋課程／老師">
       <div class="legend"><span><i style="background:rgba(120,140,130,.35)"></i>週末</span><span><i style="background:var(--today)"></i>今天</span><span><i style="background:#d92b2b"></i>元旦／農曆新年／端午節當天／中秋節當天</span><span><i style="background:rgba(217,43,43,.3)"></i>其他國定假日（含補假）</span><span>格子數字＝第幾堂</span></div>
     </div>
@@ -98,9 +98,19 @@ const PAL = ["#3f7cac","#c98a3e","#4f9d76","#9e5b8f","#b8464a","#6b7fae","#8a9e4
 const dayIdx = s => Math.round((Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10)) - Date.UTC(YEAR,0,1))/864e5);
 const NDAYS = (YEAR%4===0&&(YEAR%100!==0||YEAR%400===0)) ? 366 : 365;
 const TOTALW = NDAYS*COL;
-const GROUP_ORDER = ["夜間","日間","午間","假日"];
+// 課程分類：夜間依上課星期分「一三五／二四」，日間＋午間合併為日間，假日
+const GROUP_ORDER = ["一三五夜間","二四夜間","日間","假日"];
+const NIGHT_CAT = (()=>{ const cnt = {};
+  DATA.forEach(d=>{ if (d.slot!=="夜間") return; const dw = new Date(d.date+"T00:00").getDay();
+    (cnt[d.tid] ||= [0,0])[[1,3,5].includes(dw) ? 0 : 1]++; });
+  return Object.fromEntries(Object.entries(cnt).map(([t,[a,b]])=>[t, a>=b ? "一三五夜間" : "二四夜間"])); })();
+const catOf = d => d.slot==="夜間" ? NIGHT_CAT[d.tid] : d.slot==="假日" ? "假日" : "日間";
+// 教室：固定顯示這三間（依此順序），其他教室（如雲端教室）有課才顯示
+const ROOMS = [["教室一","教室1101"],["教室四","教室1104"],["教室三","教室1103(製圖教室)"]];
+const roomName = r => (ROOMS.find(x=>x[0]===r)||[r,r])[1];
+const roomRank = r => { const i = ROOMS.findIndex(x=>x[0]===r); return i<0 ? 99 : i; };
 const MONTH_BG = ["#b6d7a8","#ead1dc","#c9daf8","#cfe2f3","#f4cccc","#fce5cd","#d9ead3","#d0e0e3","#c9daf8","#cfe2f3","#d9d2e9","#ead1dc"];
-const GROUP_BG = {"夜間":"var(--g-night)","日間":"var(--g-day)","午間":"var(--g-noon)","假日":"var(--g-hol)"};
+const GROUP_BG = {"一三五夜間":"var(--g-night)","二四夜間":"var(--g-noon)","日間":"var(--g-day)","假日":"var(--g-hol)"};
 const tip = $("tip");
 function showTip(e,h){ tip.innerHTML=h; tip.style.opacity=1; const w=tip.offsetWidth; let x=e.clientX+14; if(x+w>innerWidth-8) x=e.clientX-w-14; tip.style.left=x+"px"; tip.style.top=(e.clientY+14)+"px"; }
 function hideTip(){ tip.style.opacity=0; }
@@ -126,15 +136,19 @@ function buildGroups(){
   const q = $("q").value.trim().toLowerCase(), slotSel = $("slot").value;
   const groups = {};
   DATA.forEach(d=>{
-    if (slotSel && d.slot!==slotSel) return;
+    const cat = catOf(d);
+    if (slotSel && cat!==slotSel) return;
     if (q && !(d.name+d.teacher).toLowerCase().includes(q)) return;
-    const gk = d.slot+"|"+d.room;
-    const g = (groups[gk] ||= {slot:d.slot, room:d.room, courses:{}});
-    const c = (g.courses[d.tid] ||= {tid:d.tid, name:d.name, short:d.short, loc:d.loc, slot:d.slot, room:d.room, teachers:new Set(), days:{}});
+    const gk = cat+"|"+d.room;
+    const g = (groups[gk] ||= {slot:cat, room:d.room, courses:{}});
+    const c = (g.courses[d.tid] ||= {tid:d.tid, name:d.name, short:d.short, loc:d.loc, slot:cat, room:roomName(d.room), teachers:new Set(), days:{}});
     c.teachers.add(d.teacher);
     const day = (c.days[d.date] ||= []); day.push(d);
   });
-  return Object.values(groups).sort((a,b)=>GROUP_ORDER.indexOf(a.slot)-GROUP_ORDER.indexOf(b.slot) || a.room.localeCompare(b.room));
+  if (!q) GROUP_ORDER.filter(s=>!slotSel || s===slotSel).forEach(s=>   // 沒有搜尋時，三間實體教室一律列出
+    ROOMS.forEach(([r])=>{ groups[s+"|"+r] ||= {slot:s, room:r, courses:{}}; }));
+  return Object.values(groups).sort((a,b)=>GROUP_ORDER.indexOf(a.slot)-GROUP_ORDER.indexOf(b.slot)
+    || roomRank(a.room)-roomRank(b.room) || a.room.localeCompare(b.room));
 }
 
 function render(){
@@ -160,12 +174,12 @@ function render(){
   groups.forEach(g=>{
     if (g.slot !== curSlot){
       curSlot = g.slot;
-      const sb = div("sblock"), sl = div("slab", `<span>${esc(g.slot)}</span>`);
+      const sb = div("sblock"), sl = div("slab", `<span>${esc(g.slot).replace(/(.)夜間$/, "$1<br>夜間")}</span>`);
       sl.style.background = GROUP_BG[g.slot]||"var(--soft)";
       rcol = div("rcol"); sb.append(sl, rcol); inner.appendChild(sb);
     }
     const rb = div("rblock"), lcol = div("lcol");
-    rb.append(div("rlab", `<span>${esc(g.room)}</span>`), lcol); rcol.appendChild(rb);
+    rb.append(div("rlab", `<span>${esc(roomName(g.room)).replace("(", "<br>(")}</span>`), lcol); rcol.appendChild(rb);
     const courses = Object.values(g.courses).map(c=>{
       const ds = Object.keys(c.days).sort(); c.first = dayIdx(ds[0]); c.last = dayIdx(ds[ds.length-1]); c.dates = ds;
       c.teacherTxt = [...new Set([...c.teachers].flatMap(t=>t.replace(/\s*\([^)]*\)/g,"").split("、")).map(x=>x.trim()).filter(Boolean))].join("、");
@@ -180,6 +194,7 @@ function render(){
       lane.items.push(c); lane.end = c.first*COL + c.occ;
       c.color = PAL[n++ % PAL.length];
     });
+    if (!lanes.length) lanes.push({end:-1, items:[]});   // 沒有課的教室保留一列空白
     lanes.forEach((lane,li)=>{
       const row = document.createElement("div"); row.className = "row";
       const tr = document.createElement("div"); tr.className="track"; tr.style.width = TOTALW+"px"; tr.style.height = LANE_H+"px"; tr.style.backgroundImage = BG;
