@@ -99,7 +99,7 @@
       <button id="goToday">今天</button>
       <select id="slot"><option value="">全部分類</option><option>一三五夜間</option><option>二四夜間</option><option>日間</option><option>假日</option></select>
       <input type="search" id="q" placeholder="搜尋課程／老師">
-      <div class="legend"><span><i style="background:rgba(120,140,130,.35)"></i>週末</span><span><i style="background:var(--today)"></i>今天</span><span><i style="background:#d92b2b"></i>元旦／農曆新年／端午節當天／中秋節當天</span><span><i style="background:rgba(217,43,43,.3)"></i>其他國定假日（含補假）</span><span>格子數字＝第幾堂</span></div>
+      <div class="legend"><span><i style="background:rgba(120,140,130,.35)"></i>週末</span><span><i style="background:var(--today)"></i>今天</span><span><i style="background:rgba(217,43,43,.3)"></i>國定假日（含補假）</span><span>格子數字＝第幾堂</span></div>
     </div>
     <div class="scroller" id="sc"><div class="inner" id="inner"></div></div>
   </section>
@@ -157,7 +157,13 @@ function setWindow(iso){
   for (let i=1;i<NDAYS;i++) r += `<rect x='${i*COL}' y='0' width='1' height='100%' fill='rgba(140,150,145,.22)'/>`;   // 每日淺灰格線
   monthSegs.slice(1).forEach(s=>{ r += `<rect x='${s.i*COL}' y='0' width='1' height='100%' fill='rgba(120,140,130,.45)'/>`; });
   BG = `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${TOTALW}' height='100%' preserveAspectRatio='none'>${r}</svg>`)}")`;
-  HOLS = (META.holidays||[]).map(h=>({...h, i0:dayIdx(h.start), i1:dayIdx(h.end)}))
+  // 國定假日一律淡紅色；同一段連假（相鄰且說明相同）合併成一個標籤，例如「春節／春節／春節連假」→「春節」
+  const merged = [];
+  (META.holidays||[]).forEach(h=>{ const p = merged[merged.length-1];
+    if (p && p.note===h.note && msOf(h.start)-msOf(p.end)===864e5){ p.end = h.end; if (!p.names.includes(h.name)) p.names.push(h.name); }
+    else merged.push({...h, names:[h.name]}); });
+  merged.forEach(h=>{ h.name = h.names.filter(n=>!(n.endsWith("連假") && h.names.includes(n.slice(0,-2)))).join("、"); });
+  HOLS = merged.map(h=>({...h, strong:false, i0:dayIdx(h.start), i1:dayIdx(h.end)}))
     .filter(h=>h.i1>=0 && h.i0<NDAYS).map(h=>({...h, i0:Math.max(0,h.i0), i1:Math.min(NDAYS-1,h.i1)}));
   todayIdx = dayIdx(META.today); if (todayIdx<0 || todayIdx>=NDAYS) todayIdx = -1;
   VIEW = DATA.filter(d=>d.date>=iso && d.date<=END_ISO);
