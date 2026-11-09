@@ -297,6 +297,7 @@ function applyPlans(tracks){
   return n;
 }
 if (META.planPreview && META.tracks) applyPlans(META.tracks.tracks);
+else if (META.publishedPlans) applyPlans(META.publishedPlans);   // 公開網站：已按「儲存並發布」的規劃課
 const COL = 20, LABW = 132, LANE_H = 52;
 let NDAYS = 365, TOTALW = NDAYS*COL;   // 從起始日起顯示 365 天（規劃預覽會延長到最後一門規劃課結束）
 const $ = id => document.getElementById(id);
@@ -343,7 +344,7 @@ document.documentElement.style.setProperty("--labw", LABW+"px");
 let monthSegs = [], BG = "", HOLS = [], todayIdx = -1, VIEW = [];
 function setWindow(iso){
   START = msOf(iso);
-  if (META.planPreview) {   // 規劃的課程期間較長：行事曆延長到最後一堂課（含規劃課）之後兩週
+  if (META.planPreview || DATA.some(d=>d.plan)) {   // 規劃的課程期間較長：行事曆延長到最後一堂課（含規劃課）之後兩週
     const last = DATA.reduce((m,d)=>d.date>m ? d.date : m, "");
     NDAYS = Math.max(365, last ? Math.round((msOf(last)-START)/864e5) + 15 : 0); TOTALW = NDAYS*COL;
   }
@@ -733,6 +734,10 @@ if (META.planPreview) {
   const n = new Set(DATA.filter(d=>d.plan).map(d=>d.tid)).size;
   $("planBar").innerHTML = `<b>規劃預覽（只在本機，不會發布）</b>　虛線框＝專班線上還沒在系統上架的 ${n} 門課，依時段推算每一堂（已跳過國定假日與停課日）；還沒選教室的課列在「規劃・未定教室」。搜尋「規劃」可以只看這些課。`;
   $("planBar").hidden = false; document.title = "規劃預覽｜" + document.title;
+} else if (DATA.some(d=>d.plan)) {
+  const n = new Set(DATA.filter(d=>d.plan).map(d=>d.tid)).size;
+  $("planBar").innerHTML = `<b>規劃中</b>　虛線框＝已規劃、還沒在系統上架的 ${n} 門課（日期、教室可能再調整，以上架後為準）。搜尋「規劃」可以只看這些課。`;
+  $("planBar").hidden = false;
 }
 if (!META.openings) $("goOpen").hidden = true;
 if (!META.endings) $("goEnd").hidden = true;
